@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace MQTTOperationsService.Configuration
 {
@@ -32,5 +28,14 @@ namespace MQTTOperationsService.Configuration
         {
             get; set;
         }
+
+        /// <summary>
+        /// A time to live for the message in seconds.
+        /// -1 means treat the operation as if it has no expiry
+        /// </summary>
+        public int MessageExpiryIntervalSecs
+        {
+            get; set;
+        } = 30; //default to 30 seconds
     }
 }

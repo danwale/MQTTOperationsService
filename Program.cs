@@ -1,8 +1,10 @@
 using System.IO;
+using System.Reflection;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using MQTTOperationsService;
 
 using IHost host = Host.CreateDefaultBuilder(args).
@@ -12,7 +14,7 @@ using IHost host = Host.CreateDefaultBuilder(args).
 
         IHostEnvironment env = hostingContext.HostingEnvironment;
 
-        configuration.SetBasePath(Directory.GetCurrentDirectory())
+        configuration.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                      .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                      .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
     })
