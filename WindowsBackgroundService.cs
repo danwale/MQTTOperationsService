@@ -26,7 +26,7 @@ namespace MQTTOperationsService
                 _logger.LogInformation("Starting MQTT Operations Service at: {time}", DateTimeOffset.Now);
 
                 await _mqttWorker.Initialise(stoppingToken);
-                WhenCancelled(stoppingToken).Wait();
+                WhenCancelled(stoppingToken).Wait(stoppingToken);
 
                 _logger.LogInformation("Service stopped.");
             }

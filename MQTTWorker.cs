@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Management.Automation;
 using System.Security.Cryptography.X509Certificates;
@@ -16,6 +16,7 @@ using MQTTnet.Client.Options;
 using MQTTnet.Client.Connecting;
 
 using MQTTOperationsService.Configuration;
+using System.Management.Automation.Runspaces;
 
 namespace MQTTOperationsService
 {
@@ -24,7 +25,7 @@ namespace MQTTOperationsService
         private readonly ILogger<MQTTWorker> _logger;
         private readonly IConfiguration _configuration;
 
-        private IDictionary<string, Operation> _operations = new Dictionary<string, Operation>();
+        private readonly IDictionary<string, Operation> _operations = new Dictionary<string, Operation>();
 
         private static IMqttClient _mqttClient;
 
@@ -47,6 +48,7 @@ namespace MQTTOperationsService
             _mqttClient.UseDisconnectedHandler(async e =>
             {
                 _logger.LogInformation("MQTT Disconnected, attempting a reconnect...");
+                _operations.Clear();
                 if (e.Exception != null)
                 {
                     _logger.LogInformation("Exception was: {0}", e.Exception.ToString());
@@ -80,39 +82,93 @@ namespace MQTTOperationsService
                 }
             });
 
-            _mqttClient.UseApplicationMessageReceivedHandler(async args =>
-            {
-                string topic = args.ApplicationMessage.Topic;
-                var operation = _operations[topic];
-                _logger.LogInformation($"{operation.Name} triggered");
-                string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
-                Dictionary<string, string>  payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
-                PowerShell ps = PowerShell.Create();
-                ps.AddScript(operation.Command);
-                foreach (var param in operation.Parameters)
-                {
-                    ps.AddParameter(param.Name, payloadParams[param.Name]);
-                }
-                var result = ps.Invoke();
-                if (operation.CaptureOutput)
-                {
-                    StringBuilder sb = new StringBuilder();
-                    foreach (var r in result)
-                    {
-                        sb.Append(r.ToString());
-                    }
-                    var responseMessage = new MqttApplicationMessage()
-                    {
-                        Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
-                        QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
-                        Topic = args.ApplicationMessage.ResponseTopic ?? operation.Topics.Response,
-                        Retain = false
-                    };
-                    await _mqttClient.PublishAsync(responseMessage);
-                }
-                        
-            });
+            _ = _mqttClient.UseApplicationMessageReceivedHandler(async args =>
+              {
+                  string topic = args.ApplicationMessage.Topic;
+                  var operation = _operations[topic];
+                  _logger.LogInformation($"{operation.Name} triggered");
+                  string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+                  Dictionary<string, string> payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
+                  try
+                  {
+                      PowerShell ps = PowerShell.Create();
+                      InitialSessionState initial = InitialSessionState.CreateDefault();
+                      initial.AuthorizationManager = new AuthorizationManager("Microsoft.PowerShell");
+                      using (Runspace runspace = RunspaceFactory.CreateRunspace(initial))
+                      {
+                          runspace.Open();
+                          ps.Runspace = runspace;
+                          ps.AddCommand(operation.Command);
+                          foreach (var param in operation.Parameters)
+                          {
+                              ps.AddParameter(param.Name, payloadParams[param.Name]);
+                          }
+                          var result = ps.Invoke();
+                          if (ps.Streams.Error.Count > 0)
+                          {
+                              _logger.LogError("An error occurred while running the script.");
+                              if (operation.CaptureOutput)
+                              {
+                                    MqttApplicationMessage responseMessage = null;
+                                    var sb = new StringBuilder();
+                                    foreach (var errorStream in ps.Streams.Error)
+                                    {
+                                        sb.AppendLine(errorStream.Exception.Message);
+                                    }
+                                  _logger.LogError($"Error Details: {sb.ToString()}");
+                                  responseMessage = new MqttApplicationMessage()
+                                    {
+                                        Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
+                                        QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+                                        Topic = args.ApplicationMessage.ResponseTopic ?? operation.Topics.Response,
+                                        Retain = false
+                                    };
+                                }
+                            }
+                          else
+                          {
+                              if (operation.CaptureOutput)
+                              {
+                                  MqttApplicationMessage responseMessage = null;
+                                  if (ps.Streams.Information.Count > 0)
+                                  {
+                                      var sb = new StringBuilder();
+                                      foreach (var infoStream in ps.Streams.Information)
+                                      {
+                                          sb.AppendLine(infoStream.MessageData.ToString());
+                                      }
+                                      _logger.LogInformation($"Output: {sb.ToString()}");
+                                      responseMessage = new MqttApplicationMessage()
+                                      {
+                                          Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
+                                          QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+                                          Topic = args.ApplicationMessage.ResponseTopic ?? operation.Topics.Response,
+                                          Retain = false
+                                      };
+                                  }
+                                  else
+                                  {
+                                      responseMessage = new MqttApplicationMessage()
+                                      {
+                                          Payload = UTF8Encoding.UTF8.GetBytes("Executed Successfully"),
+                                          QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+                                          Topic = args.ApplicationMessage.ResponseTopic ?? operation.Topics.Response,
+                                          Retain = false
+                                      };
+                                  }
+                                  await _mqttClient.PublishAsync(responseMessage);
+                              }
+                          }
+                          
+                      }
+                  }
+                  catch (Exception ex)
+                  {
+                      _logger.LogError($"Error excecuting script for {operation.Name}, Exception: {ex.Message}");
+                  }
+              });
 
+            
             var clientOptionsBuilder = new MqttClientOptionsBuilder();
             IList<X509Certificate2> certificates = new List<X509Certificate2>();
             var caCert = new X509Certificate2(mqttSettings.CAFile);
@@ -143,6 +199,7 @@ namespace MQTTOperationsService
                 {
                     Certificates = certificates,
                     UseTls = true,
+                    SslProtocol = System.Security.Authentication.SslProtocols.Tls12,
                     AllowUntrustedCertificates = false,
                     IgnoreCertificateChainErrors = false,
                     IgnoreCertificateRevocationErrors = true,
