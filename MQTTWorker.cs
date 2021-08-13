@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -88,7 +90,7 @@ namespace MQTTOperationsService
               {
                   string topic = args.ApplicationMessage.Topic;
                   var operation = _operations[topic];
-                  _logger.LogInformation($"{operation.Name} triggered by topic {topic}");
+                  _logger.LogInformation($"{operation.Name} triggered by topic {topic} from ClientID: {args.ClientId}");
                   if (args.ApplicationMessage.Payload != null && args.ApplicationMessage.Payload.Length > 0)
                   {
                       string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
@@ -210,6 +212,7 @@ namespace MQTTOperationsService
                 using (Runspace runspace = RunspaceFactory.CreateRunspace(initial))
                 {
                     runspace.Open();
+                    runspace.SessionStateProxy.Path.SetLocation(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
                     powerShell.Runspace = runspace;
                     powerShell.AddCommand(operation.Command);
                     foreach (var param in operation.Parameters)
