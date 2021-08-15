@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Security.Authentication;
+using System.Text.Json.Serialization;
 
 namespace MQTTOperationsService.Configuration
 {
@@ -18,6 +15,29 @@ namespace MQTTOperationsService.Configuration
             get; set; 
         } = 8883;
 
-        
+        public bool CleanSession
+        {
+            get; set;
+        } = false;
+
+        public bool UseTls
+        {
+            get; set;
+        } = true;
+
+        public TlsSettings TlsSettings
+        {
+            get; set;
+        }
+
+        public string Username
+        {
+            get; set;
+        }
+
+        public string Password
+        {
+            get; set;
+        }
     }
 }
