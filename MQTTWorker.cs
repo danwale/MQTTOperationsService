@@ -63,7 +63,7 @@ namespace MQTTOperationsService
                 bool result = await Initialise(ct);
                 if (result)
                 {
-                    Logger.LogInformation("Successfully reconnected to {0} MQTT broker.", mqttSettings.Broker.Hostname);
+                    Logger.LogInformation("Successfully reconnected to {0} MQTT broker.", mqttSettings.Hostname);
                 }
             });
 
@@ -138,16 +138,16 @@ namespace MQTTOperationsService
             bool configuartionErrors = false;
             var clientOptionsBuilder = new MqttClientOptionsBuilder();
             clientOptionsBuilder
-                .WithTcpServer(mqttSettings.Broker.Hostname, mqttSettings.Broker.Port)
-                .WithCleanSession(mqttSettings.Broker.CleanSession)
+                .WithTcpServer(mqttSettings.Hostname, mqttSettings.Port)
+                .WithCleanSession(mqttSettings.CleanSession)
                 .WithClientId(mqttSettings.ClientID);
 
-            if (mqttSettings.Broker.UseTls)
+            if (mqttSettings.UseTls)
             {
-                if (!string.IsNullOrWhiteSpace(mqttSettings.Broker.TlsSettings.CAFile))
+                if (!string.IsNullOrWhiteSpace(mqttSettings.TlsSettings.CAFile))
                 {
                     IList<X509Certificate2> certificates = new List<X509Certificate2>();
-                    var caCert = new X509Certificate2(mqttSettings.Broker.TlsSettings.CAFile);
+                    var caCert = new X509Certificate2(mqttSettings.TlsSettings.CAFile);
                     certificates.Add(caCert);
                     // Add the CA certificate to the users CA store
                     using (var caCertStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.CurrentUser))
@@ -157,9 +157,9 @@ namespace MQTTOperationsService
                     }
 
                     // If the client certificate is not supplied this means 1-way TLS is being used
-                    if (!string.IsNullOrWhiteSpace(mqttSettings.Broker.TlsSettings.ClientCert))
+                    if (!string.IsNullOrWhiteSpace(mqttSettings.TlsSettings.ClientCert))
                     {
-                        var clientCert = new X509Certificate2(mqttSettings.Broker.TlsSettings.ClientCert);
+                        var clientCert = new X509Certificate2(mqttSettings.TlsSettings.ClientCert);
                         certificates.Add(clientCert);
                         // Add the client certificate to the users personal store
                         using (var personalCertsStore = new X509Store(StoreName.TrustedPeople, StoreLocation.CurrentUser))
@@ -177,14 +177,14 @@ namespace MQTTOperationsService
                     {
                         Certificates = certificates,
                         UseTls = true,
-                        SslProtocol = mqttSettings.Broker.TlsSettings.SslProtocol,
+                        SslProtocol = mqttSettings.TlsSettings.SslProtocol,
                         AllowUntrustedCertificates = false,
                         IgnoreCertificateChainErrors = false,
                         IgnoreCertificateRevocationErrors = false,
                         CertificateValidationHandler = (MqttClientCertificateValidationCallbackContext context) =>
                         {
                             Logger.LogDebug("Certificate--> issuer: " + context.Certificate.Issuer + " subject: " + context.Certificate.Subject);
-                            if (mqttSettings.Broker.TlsSettings.VerifyHostname)
+                            if (mqttSettings.TlsSettings.VerifyHostname)
                             {
                                 Logger.LogDebug("Connection address verification is being performed");
                                 bool verified = VerifyConnectionAddress(context, mqttSettings);
@@ -206,12 +206,12 @@ namespace MQTTOperationsService
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(mqttSettings.Broker.Username) && !string.IsNullOrWhiteSpace(mqttSettings.Broker.Password))
+            if (!string.IsNullOrWhiteSpace(mqttSettings.Username) && !string.IsNullOrWhiteSpace(mqttSettings.Password))
             {
                 clientOptionsBuilder.WithCredentials(new MqttClientCredentials()
                 {
-                    Username = mqttSettings.Broker.Username,
-                    Password = UTF8Encoding.UTF8.GetBytes(mqttSettings.Broker.Password)
+                    Username = mqttSettings.Username,
+                    Password = UTF8Encoding.UTF8.GetBytes(mqttSettings.Password)
                 });
             }
 
@@ -227,7 +227,7 @@ namespace MQTTOperationsService
                     if (result.ResultCode != MqttClientConnectResultCode.Success)
                     {
                         // This code below will switch between the primary and secondary brokers if the connection fails to connect
-                        Logger.LogError("Failure to connect to {0} broker", mqttSettings.Broker.Hostname);
+                        Logger.LogError("Failure to connect to {0} broker", mqttSettings.Hostname);
                         Logger.LogError("Error Code: {0}", result.ResultCode.ToString());
                     }
                     else
@@ -263,7 +263,7 @@ namespace MQTTOperationsService
                         {
                             if (key.Equals("IP Address", StringComparison.CurrentCultureIgnoreCase))
                             {
-                                if (mqttSettings.Broker.Hostname.Equals(SANs[key]))
+                                if (mqttSettings.Hostname.Equals(SANs[key]))
                                 {
                                     Logger.LogDebug("The service was configured to connect using an IP Address that matched a SAN IP Address entry");
                                     return true;
@@ -271,7 +271,7 @@ namespace MQTTOperationsService
                             }
                             else if (key.Equals("DNS", StringComparison.CurrentCultureIgnoreCase))
                             {
-                                if (mqttSettings.Broker.Hostname.Equals(SANs[key]))
+                                if (mqttSettings.Hostname.Equals(SANs[key]))
                                 {
                                     Logger.LogDebug("The service was configured to connect using a DNS Address that matched a SAN DNS entry");
                                     return true;
@@ -291,7 +291,7 @@ namespace MQTTOperationsService
                     string cn = GetCertificateCN(serverCertificate);
                     if (!string.IsNullOrWhiteSpace(cn))
                     {
-                        if (cn.Equals(mqttSettings.Broker.Hostname, StringComparison.CurrentCultureIgnoreCase))
+                        if (cn.Equals(mqttSettings.Hostname, StringComparison.CurrentCultureIgnoreCase))
                         {
                             Logger.LogDebug("Successfully matched the CN to the connection address used");
                             return true;
