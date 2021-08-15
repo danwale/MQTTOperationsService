@@ -90,7 +90,7 @@ namespace MQTTOperationsService
               {
                   string topic = args.ApplicationMessage.Topic;
                   var operation = _operations[topic];
-                  _logger.LogInformation($"{operation.Name} triggered by topic {topic} from ClientID: {args.ClientId}");
+                  _logger.LogInformation($"{operation.Name} triggered by topic {topic}");
                   if (args.ApplicationMessage.Payload != null && args.ApplicationMessage.Payload.Length > 0)
                   {
                       string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
