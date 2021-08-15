@@ -12,16 +12,6 @@
             get; set;
         }
 
-        public string CAFile
-        {
-            get; set;
-        }
-
-        public string ClientCert
-        {
-            get; set;
-        }
-
         public int ReconnectDelayMs
         {
             get; set;
