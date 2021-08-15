@@ -171,7 +171,7 @@ namespace MQTTOperationsService
                     IgnoreCertificateRevocationErrors = true,
                     CertificateValidationHandler = (MqttClientCertificateValidationCallbackContext c) =>
                     {
-                        _logger.LogInformation("Certificate--> issuer: " + c.Certificate.Issuer + " subject: " + c.Certificate.Subject);
+                        _logger.LogDebug("Certificate--> issuer: " + c.Certificate.Issuer + " subject: " + c.Certificate.Subject);
                         return true;
                     }
                 });
@@ -220,6 +220,7 @@ namespace MQTTOperationsService
                         powerShell.AddParameter(param.Name, payloadParams[param.Name]);
                     }
                     var result = powerShell.Invoke();
+
                     if (powerShell.Streams.Error.Count > 0)
                     {
                         _logger.LogError("An error occurred while running the script.");
@@ -232,14 +233,22 @@ namespace MQTTOperationsService
                         if (operation.CaptureOutput)
                         {
                             MqttApplicationMessage responseMessage = null;
-                            responseMessage = new MqttApplicationMessage()
+                            responseTopic = responseTopic ?? operation.Topics.Response;
+                            if (!string.IsNullOrWhiteSpace(responseTopic))
                             {
-                                Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
-                                QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
-                                Topic = responseTopic ?? operation.Topics.Response,
-                                Retain = false
-                            };
-                            await _mqttClient.PublishAsync(responseMessage);
+                                responseMessage = new MqttApplicationMessage()
+                                {
+                                    Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
+                                    QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+                                    Topic = responseTopic ?? operation.Topics.Response,
+                                    Retain = false
+                                };
+                                await _mqttClient.PublishAsync(responseMessage);
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Operation {operation.Name} is configured to send a response, an error occurered which should be sent, but the response topic could not be determined");
+                            }
                         }
                     }
                     else
@@ -255,24 +264,40 @@ namespace MQTTOperationsService
                                     sb.AppendLine(infoStream.MessageData.ToString());
                                 }
                                 _logger.LogInformation($"Script Output: {sb.ToString()}");
-                                responseMessage = new MqttApplicationMessage()
+                                responseTopic = responseTopic ?? operation.Topics.Response;
+                                if (!string.IsNullOrWhiteSpace(responseTopic))
                                 {
-                                    Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
-                                    QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
-                                    Topic = responseTopic ?? operation.Topics.Response,
-                                    Retain = false
-                                };
+                                    responseMessage = new MqttApplicationMessage()
+                                    {
+                                        Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
+                                        QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+                                        Topic = responseTopic ?? operation.Topics.Response,
+                                        Retain = false
+                                    };
+                                }
+                                else
+                                {
+                                    _logger.LogWarning($"Operation {operation.Name} is configured to send a response but the response topic could not be determined");
+                                }
                             }
                             else
                             {
                                 _logger.LogInformation("No script output detected, sending 'Executed Successfully' as a response payload");
-                                responseMessage = new MqttApplicationMessage()
+                                responseTopic = responseTopic ?? operation.Topics.Response;
+                                if (!string.IsNullOrWhiteSpace(responseTopic))
                                 {
-                                    Payload = UTF8Encoding.UTF8.GetBytes("Executed Successfully"),
-                                    QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
-                                    Topic = responseTopic ?? operation.Topics.Response,
-                                    Retain = false
-                                };
+                                    responseMessage = new MqttApplicationMessage()
+                                    {
+                                        Payload = UTF8Encoding.UTF8.GetBytes("Executed Successfully"),
+                                        QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
+                                        Topic = responseTopic ?? operation.Topics.Response,
+                                        Retain = false
+                                    };
+                                }
+                                else
+                                {
+                                    _logger.LogWarning($"Operation {operation.Name} is configured to send a response but the response topic could not be determined");
+                                }
                             }
                             await _mqttClient.PublishAsync(responseMessage);
                         }
