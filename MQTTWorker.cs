@@ -77,7 +77,7 @@ namespace MQTTOperationsService
                     var subscribeResult = await _mqttClient.SubscribeAsync(operation.Topics.Trigger, MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce); // QoS 2 subscription
                     if (subscribeResult.Items.Count > 0 && subscribeResult.Items[0].ResultCode == MQTTnet.Client.Subscribing.MqttClientSubscribeResultCode.GrantedQoS2)
                     {
-                        Logger.LogInformation($"Successfully subsribed to topic {operation.Topics.Trigger}");
+                        Logger.LogInformation($"Successfully subsribed to topic {operation.Topics.Trigger} for operation named {operation.Name}");
                         _operations.Add(operation.Topics.Trigger, operation);
                     }
                     else
@@ -89,49 +89,60 @@ namespace MQTTOperationsService
 
             _ = _mqttClient.UseApplicationMessageReceivedHandler(async args =>
               {
-                  string topic = args.ApplicationMessage.Topic;
-                  var operation = _operations[topic];
-                  Logger.LogInformation($"{operation.Name} triggered by topic {topic}");
-                  if (args.ApplicationMessage.Payload != null && args.ApplicationMessage.Payload.Length > 0)
+                  if (_operations.Count > 0)
                   {
-                      string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
-                      Dictionary<string, string> payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
-                      if (payloadParams.ContainsKey("UserID") && payloadParams.ContainsKey("DateTime"))
+                      string topic = args.ApplicationMessage.Topic;
+                      var operation = _operations[topic];
+                      Logger.LogInformation($"{operation.Name} triggered by topic {topic}");
+                      if (args.ApplicationMessage.Payload != null && args.ApplicationMessage.Payload.Length > 0)
                       {
-                          Logger.LogInformation($"Payload came from UserID: {payloadParams["UserID"]} at {payloadParams["DateTime"]}");
-                          if (operation.MessageExpiryIntervalSecs != -1)
+                          Dictionary<string, string> payloadParams = new Dictionary<string, string>();
+                          try
                           {
-                              if (DateTime.TryParse(payloadParams["DateTime"], out DateTime dateTime))
+                              string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+                              payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
+                          }
+                          catch (Exception ex)
+                          {
+                              Logger.LogError(ex, $"Failed to parse the message payload sent to the trigger topic {topic}");
+                          }
+                          if (payloadParams.ContainsKey("UserID") && payloadParams.ContainsKey("DateTime"))
+                          {
+                              Logger.LogInformation($"Payload came from UserID: {payloadParams["UserID"]} at {payloadParams["DateTime"]}");
+                              if (operation.MessageExpiryIntervalSecs != -1)
                               {
-                                  if (DateTime.Now.Subtract(dateTime).TotalSeconds < operation.MessageExpiryIntervalSecs)
+                                  if (DateTime.TryParse(payloadParams["DateTime"], out DateTime dateTime))
                                   {
-                                      Logger.LogDebug("The message was determined to have a valid expiry");
-                                      await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
+                                      if (DateTime.Now.Subtract(dateTime).TotalSeconds < operation.MessageExpiryIntervalSecs)
+                                      {
+                                          Logger.LogDebug("The message was determined to have a valid expiry");
+                                          await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
+                                      }
+                                      else
+                                      {
+                                          Logger.LogError("The message was determined to have expired and no operation was completed");
+                                      }
                                   }
                                   else
                                   {
-                                      Logger.LogError("The message was determined to have expired and no operation was completed");
+                                      Logger.LogError("Failed to parse the DateTime in the payload so couldn't work out if the message had expired, no operation completed");
                                   }
                               }
                               else
                               {
-                                  Logger.LogError("Failed to parse the DateTime in the payload so couldn't work out if the message had expired, no operation completed");
+                                  Logger.LogInformation("The MessageExpiryIntervalSecs on the configured operation is -1 which is no message expiry, processing operation regardless");
+                                  await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
                               }
                           }
                           else
                           {
-                              Logger.LogInformation("The MessageExpiryIntervalSecs on the configured operation is -1 which is no message expiry, processing operation regardless");
-                              await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
+                              Logger.LogError("The payload must contain a 'UserID' identifying who sent the payload and a 'DateTime' for the time it was sent");
                           }
                       }
                       else
                       {
-                          Logger.LogError("The payload must contain a 'UserID' identifying who sent the payload and a 'DateTime' for the time it was sent");
+                          Logger.LogError("All MQTT trigger messages must contain a payload with a minimum set of properties (UserID and DateTime) and optionally parameters.");
                       }
-                  }
-                  else
-                  {
-                      Logger.LogError("All MQTT trigger messages must contain a payload with a minimum set of properties (UserID and DateTime) and optionally parameters.");
                   }
               });
 
