@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>dotnet-MQTTOperationsService-8F3FE089-EE62-41B7-A85F-166E263FFFBB</UserSecretsId>
+    <Authors>Daniel Wale (daniel.wale@gmail.com)</Authors>
+    <Product>MQTT Operations Service</Product>
+    <Description>Provides a highly configurable MQTT interface to execute and return the output of various operations.</Description>
+    <Copyright>2021 © Daniel Wale</Copyright>
+    <PackageTags>IIoT,IoT,MQTT,PowerShell,Windows Service</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageProjectUrl></PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,5 +25,13 @@
     <PackageReference Include="MQTTnet" Version="3.0.16" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
     <PackageReference Include="System.Management.Automation" Version="7.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>
