@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
@@ -110,7 +110,7 @@ namespace MQTTOperationsService
                         {
                             Logger.LogError(ex, $"Failed to parse the message payload sent to the trigger topic {topic}");
                         }
-                        if (payloadParams.ContainsKey("UserID") && (operation.MessageExpiryIntervalSecs != -1 && payloadParams.ContainsKey("DateTime")))
+                        if (payloadParams.ContainsKey("UserID"))
                         {
                             Logger.LogInformation($"Payload came from UserID: {payloadParams["UserID"]}");
                             if (operation.MessageExpiryIntervalSecs != -1) // Check if there is a message expiry value for the operation
