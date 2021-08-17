@@ -2,6 +2,12 @@
 	[Parameter(Mandatory = $true, Position = 1)]
     [ValidateNotNullOrEmpty()]
     [string]
-    $ServerName = "DefaultNameIfNotProvided"
+    $ServerName = "DefaultNameIfNotProvided",
+
+    [Parameter(Mandatory = $true, Position = 2)]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $UserID
 )
-Write-Host "Script ran with param ServerName param value '$ServerName'"
+$output = @{UserID=$UserID;ServerName=$ServerName} | ConvertTo-Json -Compress
+Write-Host $output
