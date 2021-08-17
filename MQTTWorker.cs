@@ -1,27 +1,27 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Net;
 using System.Reflection;
 using System.Security.Authentication;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.Json;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
 using MQTTnet.Client.Connecting;
+using MQTTnet.Client.Options;
 
 using MQTTOperationsService.Configuration;
-using System.Security.Cryptography;
-using System.Net;
 
 namespace MQTTOperationsService
 {
@@ -40,6 +40,10 @@ namespace MQTTOperationsService
             Logger = logger;
         }
 
+        /// <summary>
+        /// Create the MQTT client and connect using the configuration values.
+        /// Setup the event handlers for MQTT disconnection/connnection and messages being delivered that the client subscribed to.
+        /// </summary>
         public async Task<bool> Initialise(CancellationToken ct)
         {
             MQTTSettings mqttSettings = new();
@@ -88,63 +92,76 @@ namespace MQTTOperationsService
             });
 
             _ = _mqttClient.UseApplicationMessageReceivedHandler(async args =>
-              {
-                  if (_operations.Count > 0)
-                  {
-                      string topic = args.ApplicationMessage.Topic;
-                      var operation = _operations[topic];
-                      Logger.LogInformation($"{operation.Name} triggered by topic {topic}");
-                      if (args.ApplicationMessage.Payload != null && args.ApplicationMessage.Payload.Length > 0)
-                      {
-                          Dictionary<string, string> payloadParams = new Dictionary<string, string>();
-                          try
-                          {
-                              string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
-                              payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
-                          }
-                          catch (Exception ex)
-                          {
-                              Logger.LogError(ex, $"Failed to parse the message payload sent to the trigger topic {topic}");
-                          }
-                          if (payloadParams.ContainsKey("UserID") && payloadParams.ContainsKey("DateTime"))
-                          {
-                              Logger.LogInformation($"Payload came from UserID: {payloadParams["UserID"]} at {payloadParams["DateTime"]}");
-                              if (operation.MessageExpiryIntervalSecs != -1)
-                              {
-                                  if (DateTime.TryParse(payloadParams["DateTime"], out DateTime dateTime))
-                                  {
-                                      if (DateTime.Now.Subtract(dateTime).TotalSeconds < operation.MessageExpiryIntervalSecs)
-                                      {
-                                          Logger.LogDebug("The message was determined to have a valid expiry");
-                                          await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
-                                      }
-                                      else
-                                      {
-                                          Logger.LogError("The message was determined to have expired and no operation was completed");
-                                      }
-                                  }
-                                  else
-                                  {
-                                      Logger.LogError("Failed to parse the DateTime in the payload so couldn't work out if the message had expired, no operation completed");
-                                  }
-                              }
-                              else
-                              {
-                                  Logger.LogInformation("The MessageExpiryIntervalSecs on the configured operation is -1 which is no message expiry, processing operation regardless");
-                                  await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
-                              }
-                          }
-                          else
-                          {
-                              Logger.LogError("The payload must contain a 'UserID' identifying who sent the payload and a 'DateTime' for the time it was sent");
-                          }
-                      }
-                      else
-                      {
-                          Logger.LogError("All MQTT trigger messages must contain a payload with a minimum set of properties (UserID and DateTime) and optionally parameters.");
-                      }
-                  }
-              });
+            {
+                if (_operations.Count > 0)
+                {
+                    string topic = args.ApplicationMessage.Topic;
+                    var operation = _operations[topic];
+                    Logger.LogInformation($"{operation.Name} triggered by topic {topic}");
+                    if (args.ApplicationMessage.Payload != null && args.ApplicationMessage.Payload.Length > 0)
+                    {
+                        Dictionary<string, string> payloadParams = new Dictionary<string, string>();
+                        try
+                        {
+                            string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
+                            payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(ex, $"Failed to parse the message payload sent to the trigger topic {topic}");
+                        }
+                        if (payloadParams.ContainsKey("UserID") && (operation.MessageExpiryIntervalSecs != -1 && payloadParams.ContainsKey("DateTime")))
+                        {
+                            Logger.LogInformation($"Payload came from UserID: {payloadParams["UserID"]}");
+                            if (operation.MessageExpiryIntervalSecs != -1) // Check if there is a message expiry value for the operation
+                            {
+                                if (payloadParams.ContainsKey("DateTime"))
+                                {
+                                    // If there is a message expiry ensure that the DateTime value in the payload has not past already and that it is within
+                                    // the expiry interval that was specified for the operation configured.
+                                    if (DateTime.TryParse(payloadParams["DateTime"], out DateTime dateTime))
+                                    {
+                                        if (DateTime.Now.Subtract(dateTime).TotalSeconds < operation.MessageExpiryIntervalSecs)
+                                        {
+                                            Logger.LogDebug($"The message was determined to have a valid expiry with at {payloadParams["DateTime"]}");
+                                            await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
+                                        }
+                                        else
+                                        {
+                                            // The operation had expired, take no action
+                                            Logger.LogError($"The message was determined to have expired and no operation was completed, DateTime: {payloadParams["DateTime"]}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // If the DateTime parameter in the payload can not be parsed assume that it has expired and take no action
+                                        Logger.LogError($"Failed to parse the DateTime in the payload so couldn't work out if the message had expired, no operation completed, DateTime: {payloadParams["DateTime"]}");
+                                    }
+                                }
+                                else
+                                {
+                                    /// The check for the DateTime parameter in the payload failed, it can't be verified so no action taken
+                                    Logger.LogError("The operation is configured to have a message expiry but there was no 'DateTime' parameter in the payload, no operation completed");
+                                }
+                            }
+                            else
+                            {
+                                // No message expiry is configured for this operation, allow it to execute the operation regardless of any DateTime
+                                Logger.LogInformation("The MessageExpiryIntervalSecs on the configured operation is -1 which is no message expiry, processing operation regardless");
+                                await ProcessPayload(operation, payloadParams, args.ApplicationMessage.ResponseTopic ?? null);
+                            }
+                        }
+                        else
+                        {
+                            Logger.LogError("The payload must contain a 'UserID' identifying who sent the payload");
+                        }
+                    }
+                    else
+                    {
+                        Logger.LogError("All MQTT trigger messages must contain a payload with a minimum set of properties (UserID and DateTime if the operation has a message expiry configured) and optionally parameters.");
+                    }
+                }
+            });
 
             bool configuartionErrors = false;
             var clientOptionsBuilder = new MqttClientOptionsBuilder();
@@ -255,10 +272,15 @@ namespace MQTTOperationsService
             {
                 Logger.LogError("Due to configuration errors the connection could not be attempted, check the logs and the appsettings.json file.");
             }
-            
+
             return connectResult;
         }
 
+        /// <summary>
+        /// Given a client certificate validation context this method will verify that the certificate sent back by the server has the address
+        /// used in establishing the connection embedded within it either in a subject alternative names extension on the certificate or if no
+        /// SAN extension exists on the certificate the CN in the subject is equal to the connection address.
+        /// </summary>
         private bool VerifyConnectionAddress(MqttClientCertificateValidationCallbackContext context, MQTTSettings mqttSettings)
         {
             try
@@ -327,6 +349,9 @@ namespace MQTTOperationsService
             }
         }
 
+        /// <summary>
+        /// Extracts the value of the CN in a certificate file.
+        /// </summary>
         private string GetCertificateCN(X509Certificate2 certificate)
         {
             int posOfCN = certificate.Subject.IndexOf("CN=");
@@ -342,12 +367,16 @@ namespace MQTTOperationsService
             }
         }
 
+        /// <summary>
+        /// Builds a dictionary of the subject alternative names values that the certificate contains.
+        /// If there is no SAN entry it will be an empty dictionary.
+        /// </summary>
         private Dictionary<string, string> GetSubjectAlternativeNames(X509Certificate2 certificate)
         {
             Dictionary<string, string> SanEntries = new Dictionary<string, string>();
 
             List<string> data = new List<string>();
-            foreach(X509Extension extension in certificate.Extensions)
+            foreach (X509Extension extension in certificate.Extensions)
             {
                 if (string.Equals(extension.Oid.FriendlyName, "Subject Alternative Name"))
                 {
@@ -372,6 +401,10 @@ namespace MQTTOperationsService
             return SanEntries;
         }
 
+        /// <summary>
+        /// Execute the operation related to the trigger topic for that operation.
+        /// This will simply run the PowerShell script configured and optionally respond on the Response Topic with the output.
+        /// </summary>
         private async Task ProcessPayload(Operation operation, Dictionary<string, string> payloadParams, string responseTopic = null)
         {
             try
