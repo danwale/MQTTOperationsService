@@ -286,29 +286,18 @@ namespace MQTTOperationsService
             try
             {
                 X509Certificate2 serverCertificate = (X509Certificate2)context.Certificate;
-                Dictionary<string, string> SANs = GetSubjectAlternativeNames(serverCertificate);
+                List<string> SANs = GetSubjectAlternativeNames(serverCertificate);
                 if (SANs.Count > 0)
                 {
                     // The Subject Alternative Name extension existed so use this for validation
-                    foreach (string key in SANs.Keys)
+                    foreach (string address in SANs)
                     {
                         try
                         {
-                            if (key.Equals("IP Address", StringComparison.CurrentCultureIgnoreCase))
+                            if (mqttSettings.Hostname.Equals(address, StringComparison.CurrentCultureIgnoreCase))
                             {
-                                if (mqttSettings.Hostname.Equals(SANs[key]))
-                                {
-                                    Logger.LogDebug("The service was configured to connect using an IP Address that matched a SAN IP Address entry");
-                                    return true;
-                                }
-                            }
-                            else if (key.Equals("DNS", StringComparison.CurrentCultureIgnoreCase))
-                            {
-                                if (mqttSettings.Hostname.Equals(SANs[key]))
-                                {
-                                    Logger.LogDebug("The service was configured to connect using a DNS Address that matched a SAN DNS entry");
-                                    return true;
-                                }
+                                Logger.LogDebug("The service was configured to connect using an address that matched a SAN entry");
+                                return true;
                             }
                         }
                         catch (Exception ex)
@@ -371,9 +360,9 @@ namespace MQTTOperationsService
         /// Builds a dictionary of the subject alternative names values that the certificate contains.
         /// If there is no SAN entry it will be an empty dictionary.
         /// </summary>
-        private Dictionary<string, string> GetSubjectAlternativeNames(X509Certificate2 certificate)
+        private List<string> GetSubjectAlternativeNames(X509Certificate2 certificate)
         {
-            Dictionary<string, string> SanEntries = new Dictionary<string, string>();
+            List<string> SanEntries = new List<string>();
 
             List<string> data = new List<string>();
             foreach (X509Extension extension in certificate.Extensions)
@@ -390,7 +379,7 @@ namespace MQTTOperationsService
                 if (entry.Contains("="))
                 {
                     string[] keyValuePair = entry.Split("=");
-                    SanEntries.Add(keyValuePair[0], keyValuePair[1]);
+                    SanEntries.Add(keyValuePair[1]);
                 }
                 else
                 {
