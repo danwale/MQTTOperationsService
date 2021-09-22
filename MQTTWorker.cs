@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
@@ -404,7 +405,7 @@ namespace MQTTOperationsService
                 using (Runspace runspace = RunspaceFactory.CreateRunspace(initial))
                 {
                     runspace.Open();
-                    runspace.SessionStateProxy.Path.SetLocation(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+                    runspace.SessionStateProxy.Path.SetLocation(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName));
                     powerShell.Runspace = runspace;
                     powerShell.AddCommand(operation.Command);
                     foreach (var param in operation.Parameters)

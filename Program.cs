@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
@@ -14,7 +16,7 @@ using IHost host = Host.CreateDefaultBuilder(args).
 
         IHostEnvironment env = hostingContext.HostingEnvironment;
 
-        configuration.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
+        configuration.SetBasePath(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName))
                      .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                      .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
     })
