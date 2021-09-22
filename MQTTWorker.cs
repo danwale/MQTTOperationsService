@@ -408,9 +408,14 @@ namespace MQTTOperationsService
                     runspace.SessionStateProxy.Path.SetLocation(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName));
                     powerShell.Runspace = runspace;
                     powerShell.AddCommand(operation.Command);
+                    string contextParam = null;
                     foreach (var param in operation.Parameters)
                     {
                         powerShell.AddParameter(param.Name, payloadParams[param.Name]);
+                        if (param.IsResponseContext)
+                        {
+                            contextParam = param.Name;
+                        }
                     }
                     var result = powerShell.Invoke();
 
@@ -456,15 +461,19 @@ namespace MQTTOperationsService
                                 {
                                     sb.AppendLine(infoStream.MessageData.ToString());
                                 }
-                                Logger.LogInformation($"Script Output: {sb.ToString()}");
+                                Logger.LogInformation($"Script output for operation {operation.Name}: {sb.ToString()}");
                                 responseTopic = responseTopic ?? operation.Topics.Response;
                                 if (!string.IsNullOrWhiteSpace(responseTopic))
                                 {
+                                    if (!string.IsNullOrWhiteSpace(contextParam))
+                                    {
+                                        responseTopic = responseTopic + "/" + payloadParams[contextParam];
+                                    }
                                     responseMessage = new MqttApplicationMessage()
                                     {
                                         Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
                                         QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
-                                        Topic = responseTopic ?? operation.Topics.Response,
+                                        Topic = responseTopic,
                                         Retain = false
                                     };
                                 }
@@ -479,11 +488,15 @@ namespace MQTTOperationsService
                                 responseTopic = responseTopic ?? operation.Topics.Response;
                                 if (!string.IsNullOrWhiteSpace(responseTopic))
                                 {
+                                    if (!string.IsNullOrWhiteSpace(contextParam))
+                                    {
+                                        responseTopic = responseTopic + "/" + payloadParams[contextParam];
+                                    }
                                     responseMessage = new MqttApplicationMessage()
                                     {
                                         Payload = UTF8Encoding.UTF8.GetBytes("Executed Successfully"),
                                         QualityOfServiceLevel = MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce,
-                                        Topic = responseTopic ?? operation.Topics.Response,
+                                        Topic = responseTopic,
                                         Retain = false
                                     };
                                 }
