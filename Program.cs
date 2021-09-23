@@ -17,13 +17,14 @@ using IHost host = Host.CreateDefaultBuilder(args).
         IHostEnvironment env = hostingContext.HostingEnvironment;
 
         string processFile = Process.GetCurrentProcess().MainModule.FileName;
-        string processDirectory = Path.GetDirectoryName(processFile);
-        if (processDirectory.EndsWith("bin"))
+        string rootDirectory = Path.GetDirectoryName(processFile);
+        if (rootDirectory.EndsWith("bin"))
         {
-            processDirectory = Directory.GetParent(processDirectory).FullName;
+            rootDirectory = Directory.GetParent(rootDirectory).FullName;
         }
+        Directory.SetCurrentDirectory(rootDirectory);
 
-        configuration.SetBasePath(Path.Combine(processDirectory, "config"))
+        configuration.SetBasePath(Path.Combine(rootDirectory, "config"))
                      .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                      .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
     })
