@@ -10,10 +10,17 @@
     <PackageTags>IIoT,IoT,MQTT,PowerShell,Windows Service</PackageTags>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageProjectUrl></PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl />
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="secondary.ps1" />
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
