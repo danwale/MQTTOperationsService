@@ -68,80 +68,91 @@ Section "Program files (Required)"
   SectionIn Ro
 
   SetOutPath $InstDir
-  WriteUninstaller "$InstDir\Uninst.exe"
+  WriteUninstaller "$InstDir\Uninstall.exe"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayName" "${NAME}"
-  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayIcon" "$InstDir\MQTTOperationsService.exe"
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayIcon" "$InstDir\bin\MQTTOperationsService.exe"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "Publisher" "Daniel Wale"
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "EstimatedSize" 76925
-  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayVersion" "1.0.0"
-  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "UninstallString" '"$InstDir\Uninst.exe"'
-  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "QuietUninstallString" '"$InstDir\Uninst.exe" /S'
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayVersion" "1.0.1"
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "UninstallString" '"$InstDir\Uninstall.exe"'
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "QuietUninstallString" '"$InstDir\Uninstall.exe" /S'
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoModify" 1
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoRepair" 1
-  
-  File .\bin\Release\net5.0\publish\*.dll
-  File .\bin\Release\net5.0\publish\*.json
+    
+  File .\bin\Release\net5.0\publish\*.txt
+
+  SetOutPath $InstDir\bin
   File .\bin\Release\net5.0\publish\*.exe
   File .\bin\Release\net5.0\publish\*.pdb
-  File .\bin\Release\net5.0\publish\*.ps1
-  File .\bin\Release\net5.0\publish\*.txt
-  
-  SetOutPath $InstDir\cs
+  File .\bin\Release\net5.0\publish\*.dll
+  File .\bin\Release\net5.0\publish\*.json
+
+  IfFileExists $InstDir\config\*.* +2
+  SetOutPath $InstDir\config
+  File .\bin\Release\net5.0\publish\config\*.json
+
+  IfFileExists $InstDir\scripts\*.* +2
+  SetOutPath $InstDir\scripts
+  File .\bin\Release\net5.0\publish\scripts\*.ps1
+
+  SetOutPath $InstDir\bin\cs
   File .\bin\Release\net5.0\publish\cs\*.dll
-  SetOutPath $InstDir\de
+  SetOutPath $InstDir\bin\de
   File .\bin\Release\net5.0\publish\de\*.dll
-  SetOutPath $InstDir\es
+  SetOutPath $InstDir\bin\es
   File .\bin\Release\net5.0\publish\es\*.dll
-  SetOutPath $InstDir\fr
+  SetOutPath $InstDir\bin\fr
   File .\bin\Release\net5.0\publish\fr\*.dll
-  SetOutPath $InstDir\it
+  SetOutPath $InstDir\bin\it
   File .\bin\Release\net5.0\publish\it\*.dll
-  SetOutPath $InstDir\ja
+  SetOutPath $InstDir\bin\ja
   File .\bin\Release\net5.0\publish\ja\*.dll
-  SetOutPath $InstDir\ko
+  SetOutPath $InstDir\bin\ko
   File .\bin\Release\net5.0\publish\ko\*.dll
-  SetOutPath $InstDir\pl
+  SetOutPath $InstDir\bin\pl
   File .\bin\Release\net5.0\publish\pl\*.dll
-  SetOutPath $InstDir\pt-BR
+  SetOutPath $InstDir\bin\pt-BR
   File .\bin\Release\net5.0\publish\pt-BR\*.dll
-  SetOutPath $InstDir\ref
+  SetOutPath $InstDir\bin\ref
   File .\bin\Release\net5.0\publish\ref\*.dll
-  SetOutPath $InstDir\ru
+  SetOutPath $InstDir\bin\ru
   File .\bin\Release\net5.0\publish\ru\*.dll
-  SetOutPath $InstDir\tr
+  SetOutPath $InstDir\bin\tr
   File .\bin\Release\net5.0\publish\tr\*.dll
-  SetOutPath $InstDir\zh-Hans
+  SetOutPath $InstDir\bin\zh-Hans
   File .\bin\Release\net5.0\publish\zh-Hans\*.dll
-  SetOutPath $InstDir\zh-Hant
+  SetOutPath $InstDir\bin\zh-Hant
   File .\bin\Release\net5.0\publish\zh-Hant\*.dll
   
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\CimCmdlets
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\CimCmdlets
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\CimCmdlets\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Diagnostics
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Diagnostics
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Diagnostics\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Host
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Host
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Host\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Management
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Management
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Management\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Security
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Security
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Security\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Utility
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Utility
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Utility\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\Microsoft.WSMan.Management
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.WSMan.Management
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.WSMan.Management\*
-  SetOutPath $InstDir\runtimes\win\lib\net5.0\Modules\PSDiagnostics
+  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\PSDiagnostics
   File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\PSDiagnostics\*
   
-  SetOutPath $InstDir\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Host
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Host
   File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Host\*
-  SetOutPath $InstDir\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Management
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Management
   File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Management\*
-  SetOutPath $InstDir\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Security
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Security
   File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Security\*
-  SetOutPath $InstDir\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Utility
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Utility
   File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Utility\*
+
+  CreateDirectory $InstDir\certs
   
-  ExecWait 'sc.exe create ${SERVICE_NAME} error= "severe" displayname= "${DISPLAY_NAME}" type= "own" start= "auto" binpath= "$INSTDIR\MQTTOperationsService.exe"'
+  ExecWait 'sc.exe create ${SERVICE_NAME} error= "severe" displayname= "${DISPLAY_NAME}" type= "own" start= "auto" binpath= "$INSTDIR\bin\MQTTOperationsService.exe"'
   ExecWait 'sc.exe description ${SERVICE_NAME} "Trigger PowerShell scripts via MQTT and send the output via MQTT"'
 SectionEnd
 
@@ -150,8 +161,8 @@ SectionEnd
 
 Section "Uninstall"
   ExecWait 'sc.exe delete ${SERVICE_NAME}'
-  Delete "$InstDir\Uninst.exe"
+  Delete "$InstDir\Uninstall.exe"
   Delete "$InstDir\*"
-  RMDir /r "$INSTDIR"
+  RMDir /r "$INSTDIR\bin"
   DeleteRegKey HKLM "${REGPATH_UNINSTSUBKEY}"
 SectionEnd

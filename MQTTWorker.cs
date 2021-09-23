@@ -13,7 +13,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -395,7 +395,7 @@ namespace MQTTOperationsService
         /// Execute the operation related to the trigger topic for that operation.
         /// This will simply run the PowerShell script configured and optionally respond on the Response Topic with the output.
         /// </summary>
-        private async Task ProcessPayload(Operation operation, Dictionary<string, string> payloadParams, string responseTopic = null)
+        public async Task ProcessPayload(Operation operation, Dictionary<string, string> payloadParams, string responseTopic = null)
         {
             try
             {
@@ -414,7 +414,14 @@ namespace MQTTOperationsService
                         powerShell.AddParameter(param.Name, payloadParams[param.Name]);
                         if (param.IsResponseContext)
                         {
-                            contextParam = param.Name;
+                            if (!string.IsNullOrWhiteSpace(contextParam))
+                            {
+                                Logger.LogWarning($"More than one parameter was configured as IsResponseContext = true on operation {operation.Name}, only the first one will be used.");
+                            }
+                            else
+                            {
+                                contextParam = param.Name;
+                            }
                         }
                     }
                     var result = powerShell.Invoke();
@@ -434,6 +441,10 @@ namespace MQTTOperationsService
                             responseTopic = responseTopic ?? operation.Topics.Response;
                             if (!string.IsNullOrWhiteSpace(responseTopic))
                             {
+                                if (!string.IsNullOrWhiteSpace(contextParam))
+                                {
+                                    responseTopic = responseTopic + "/" + payloadParams[contextParam];
+                                }
                                 responseMessage = new MqttApplicationMessage()
                                 {
                                     Payload = UTF8Encoding.UTF8.GetBytes(sb.ToString()),
