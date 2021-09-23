@@ -41,6 +41,22 @@ namespace MQTTOperationsService
             Logger = logger;
         }
 
+        private string GetFilePath(string path)
+        {
+            string result = null;
+            if (File.Exists(path))
+            {
+                result = path;
+            }
+            else
+            {
+                string fullPath = Path.GetFullPath(path);
+                result = fullPath;
+            }
+            Logger.LogInformation($"Filepath is: {result}");
+            return result;
+        }
+
         /// <summary>
         /// Create the MQTT client and connect using the configuration values.
         /// Setup the event handlers for MQTT disconnection/connnection and messages being delivered that the client subscribed to.
@@ -176,7 +192,8 @@ namespace MQTTOperationsService
                 if (!string.IsNullOrWhiteSpace(mqttSettings.TlsSettings.CAFile))
                 {
                     IList<X509Certificate2> certificates = new List<X509Certificate2>();
-                    var caCert = new X509Certificate2(mqttSettings.TlsSettings.CAFile);
+                    var path = GetFilePath(mqttSettings.TlsSettings.CAFile);
+                    var caCert = new X509Certificate2(path);
                     certificates.Add(caCert);
                     // Add the CA certificate to the users CA store
                     using (var caCertStore = new X509Store(StoreName.CertificateAuthority, StoreLocation.CurrentUser))
@@ -188,7 +205,8 @@ namespace MQTTOperationsService
                     // If the client certificate is not supplied this means 1-way TLS is being used
                     if (!string.IsNullOrWhiteSpace(mqttSettings.TlsSettings.ClientCert))
                     {
-                        var clientCert = new X509Certificate2(mqttSettings.TlsSettings.ClientCert);
+                        var clientCertPath = GetFilePath(mqttSettings.TlsSettings.ClientCert);
+                        var clientCert = new X509Certificate2(clientCertPath);
                         certificates.Add(clientCert);
                         // Add the client certificate to the users personal store
                         using (var personalCertsStore = new X509Store(StoreName.TrustedPeople, StoreLocation.CurrentUser))
@@ -405,9 +423,10 @@ namespace MQTTOperationsService
                 using (Runspace runspace = RunspaceFactory.CreateRunspace(initial))
                 {
                     runspace.Open();
-                    runspace.SessionStateProxy.Path.SetLocation(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName));
+                    runspace.SessionStateProxy.Path.SetLocation(Directory.GetCurrentDirectory());
                     powerShell.Runspace = runspace;
-                    powerShell.AddCommand(operation.Command);
+                    var commandPath = GetFilePath(operation.Command);
+                    powerShell.AddCommand(commandPath);
                     string contextParam = null;
                     foreach (var param in operation.Parameters)
                     {
