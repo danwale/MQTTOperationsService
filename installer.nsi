@@ -70,6 +70,7 @@ Section "Program files (Required)"
   SetOutPath $InstDir
   WriteUninstaller "$InstDir\Uninst.exe"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayName" "${NAME}"
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayIcon" "$InstDir\MQTTOperationsService.exe"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "Publisher" "Daniel Wale"
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "EstimatedSize" 76925
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayVersion" "1.0.0"

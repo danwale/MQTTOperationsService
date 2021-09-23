@@ -6,5 +6,10 @@
         {
             get; set;
         }
+
+        public bool IsResponseContext
+        {
+            get; set;
+        } = false;
     }
 }
