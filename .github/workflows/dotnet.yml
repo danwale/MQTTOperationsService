@@ -1,4 +1,4 @@
-name: .NET
+name: Build MQTT Operations Service
 
 on:
   push:
