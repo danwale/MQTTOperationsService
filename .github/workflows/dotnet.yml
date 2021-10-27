@@ -22,13 +22,13 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish -p:PublishProfile=FolderProfile
-    - name: makensis
+      run: dotnet publish -p:PublishProfile=FolderProfile --no-restore
+    - name: Make installer
       uses: joncloud/makensis-action@v3.6
       with:
         # Path to the .nsi script file
         script-file: installer.nsi
-    - name: Step 3 - Use the Upload Artifact GitHub Action
+    - name: Upload artifact
       uses: actions/upload-artifact@v2
       with: 
         name: MQTTOperationsService-Installer
