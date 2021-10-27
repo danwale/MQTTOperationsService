@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish -p:PublishProfile=FolderProfile --no-restore
+      run: dotnet publish -p:PublishProfile=FolderProfile
     - name: Make installer
       uses: joncloud/makensis-action@v3.6
       with:
