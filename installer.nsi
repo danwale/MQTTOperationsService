@@ -73,7 +73,7 @@ Section "Program files (Required)"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayIcon" "$InstDir\bin\MQTTOperationsService.exe"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "Publisher" "Daniel Wale"
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "EstimatedSize" 76925
-  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayVersion" "1.0.3"
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayVersion" "1.0.4"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "UninstallString" '"$InstDir\Uninstall.exe"'
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "QuietUninstallString" '"$InstDir\Uninstall.exe" /S'
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoModify" 1

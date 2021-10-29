@@ -430,17 +430,24 @@ namespace MQTTOperationsService
                     string contextParam = null;
                     foreach (var param in operation.Parameters)
                     {
-                        powerShell.AddParameter(param.Name, payloadParams[param.Name]);
-                        if (param.IsResponseContext)
+                        if (payloadParams.ContainsKey(param.Name))
                         {
-                            if (!string.IsNullOrWhiteSpace(contextParam))
+                            powerShell.AddParameter(param.Name, payloadParams[param.Name]);
+                            if (param.IsResponseContext)
                             {
-                                Logger.LogWarning($"More than one parameter was configured as IsResponseContext = true on operation {operation.Name}, only the first one will be used.");
+                                if (!string.IsNullOrWhiteSpace(contextParam))
+                                {
+                                    Logger.LogWarning($"More than one parameter was configured as IsResponseContext = true on operation {operation.Name}, only the first one will be used.");
+                                }
+                                else
+                                {
+                                    contextParam = param.Name;
+                                }
                             }
-                            else
-                            {
-                                contextParam = param.Name;
-                            }
+                        }
+                        else
+                        {
+                            Logger.LogDebug($"The parameter {param.Name} was not included in the MQTT message payload so was not included in the operation parameters.");
                         }
                     }
                     var result = powerShell.Invoke();
