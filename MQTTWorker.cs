@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Net;
@@ -122,6 +123,24 @@ namespace MQTTOperationsService
                         {
                             string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
                             payloadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(payload);
+                            
+                            // Get the user properties and see if any are hidden properties
+                            foreach (var userProperty in args.ApplicationMessage.UserProperties)
+                            {
+                                if (operation.Parameters.Exists(p => p.Name == userProperty.Name))
+                                {
+                                    if (payloadParams.ContainsKey(userProperty.Name))
+                                    {
+                                        Logger.LogDebug($"Overwriting the parameter {userProperty.Name} with a value from the user properties on the MQTT message");
+                                        payloadParams[userProperty.Name] = userProperty.Value;
+                                    }
+                                    else
+                                    {
+                                        Logger.LogDebug($"Adding a hidden parameter {userProperty.Name} with a value from the user properties on the MQTT message");
+                                        payloadParams.Add(userProperty.Name, userProperty.Value);
+                                    }
+                                }
+                            }
                         }
                         catch (Exception ex)
                         {
