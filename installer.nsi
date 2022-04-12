@@ -30,7 +30,7 @@ InstallDirRegKey HKLM "${REGPATH_UNINSTSUBKEY}" "UninstallString"
 ;--------------------------------
 ;Pages
 
-  !insertmacro MUI_PAGE_LICENSE ".\bin\Release\net5.0\publish\LICENSE.txt"
+  !insertmacro MUI_PAGE_LICENSE ".\bin\Release\net6.0\publish\LICENSE.txt"
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
   
@@ -79,76 +79,76 @@ Section "Program files (Required)"
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoModify" 1
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoRepair" 1
     
-  File .\bin\Release\net5.0\publish\*.txt
+  File .\bin\Release\net6.0\publish\*.txt
 
   SetOutPath $InstDir\bin
-  File .\bin\Release\net5.0\publish\*.exe
-  File .\bin\Release\net5.0\publish\*.pdb
-  File .\bin\Release\net5.0\publish\*.dll
-  File .\bin\Release\net5.0\publish\*.json
+  File .\bin\Release\net6.0\publish\*.exe
+  File .\bin\Release\net6.0\publish\*.pdb
+  File .\bin\Release\net6.0\publish\*.dll
+  File .\bin\Release\net6.0\publish\*.json
 
   IfFileExists $InstDir\config\*.* +2
   SetOutPath $InstDir\config
-  File .\bin\Release\net5.0\publish\config\*.json
+  File .\bin\Release\net6.0\publish\config\*.json
 
   IfFileExists $InstDir\scripts\*.* +2
   SetOutPath $InstDir\scripts
-  File .\bin\Release\net5.0\publish\scripts\*.ps1
+  File .\bin\Release\net6.0\publish\scripts\*.ps1
 
   SetOutPath $InstDir\bin\cs
-  File .\bin\Release\net5.0\publish\cs\*.dll
+  File .\bin\Release\net6.0\publish\cs\*.dll
   SetOutPath $InstDir\bin\de
-  File .\bin\Release\net5.0\publish\de\*.dll
+  File .\bin\Release\net6.0\publish\de\*.dll
   SetOutPath $InstDir\bin\es
-  File .\bin\Release\net5.0\publish\es\*.dll
+  File .\bin\Release\net6.0\publish\es\*.dll
   SetOutPath $InstDir\bin\fr
-  File .\bin\Release\net5.0\publish\fr\*.dll
+  File .\bin\Release\net6.0\publish\fr\*.dll
   SetOutPath $InstDir\bin\it
-  File .\bin\Release\net5.0\publish\it\*.dll
+  File .\bin\Release\net6.0\publish\it\*.dll
   SetOutPath $InstDir\bin\ja
-  File .\bin\Release\net5.0\publish\ja\*.dll
+  File .\bin\Release\net6.0\publish\ja\*.dll
   SetOutPath $InstDir\bin\ko
-  File .\bin\Release\net5.0\publish\ko\*.dll
+  File .\bin\Release\net6.0\publish\ko\*.dll
   SetOutPath $InstDir\bin\pl
-  File .\bin\Release\net5.0\publish\pl\*.dll
+  File .\bin\Release\net6.0\publish\pl\*.dll
   SetOutPath $InstDir\bin\pt-BR
-  File .\bin\Release\net5.0\publish\pt-BR\*.dll
+  File .\bin\Release\net6.0\publish\pt-BR\*.dll
   SetOutPath $InstDir\bin\ref
-  File .\bin\Release\net5.0\publish\ref\*.dll
+  File .\bin\Release\net6.0\publish\ref\*.dll
   SetOutPath $InstDir\bin\ru
-  File .\bin\Release\net5.0\publish\ru\*.dll
+  File .\bin\Release\net6.0\publish\ru\*.dll
   SetOutPath $InstDir\bin\tr
-  File .\bin\Release\net5.0\publish\tr\*.dll
+  File .\bin\Release\net6.0\publish\tr\*.dll
   SetOutPath $InstDir\bin\zh-Hans
-  File .\bin\Release\net5.0\publish\zh-Hans\*.dll
+  File .\bin\Release\net6.0\publish\zh-Hans\*.dll
   SetOutPath $InstDir\bin\zh-Hant
-  File .\bin\Release\net5.0\publish\zh-Hant\*.dll
+  File .\bin\Release\net6.0\publish\zh-Hant\*.dll
   
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\CimCmdlets
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\CimCmdlets\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Diagnostics
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Diagnostics\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Host
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Host\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Management
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Management\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Security
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Security\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Utility
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.PowerShell.Utility\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\Microsoft.WSMan.Management
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\Microsoft.WSMan.Management\*
-  SetOutPath $InstDir\bin\runtimes\win\lib\net5.0\Modules\PSDiagnostics
-  File .\bin\Release\net5.0\publish\runtimes\win\lib\net5.0\Modules\PSDiagnostics\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\CimCmdlets
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\CimCmdlets\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Diagnostics
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Diagnostics\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Host
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Host\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Management
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Management\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Security
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Security\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Utility
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\Microsoft.PowerShell.Utility\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\Microsoft.WSMan.Management
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\Microsoft.WSMan.Management\*
+  SetOutPath $InstDir\bin\runtimes\win\lib\net6.0\Modules\PSDiagnostics
+  File .\bin\Release\net6.0\publish\runtimes\win\lib\net6.0\Modules\PSDiagnostics\*
   
-  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Host
-  File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Host\*
-  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Management
-  File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Management\*
-  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Security
-  File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Security\*
-  SetOutPath $InstDir\bin\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Utility
-  File .\bin\Release\net5.0\publish\runtimes\unix\lib\net5.0\Modules\Microsoft.PowerShell.Utility\*
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Host
+  File .\bin\Release\net6.0\publish\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Host\*
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Management
+  File .\bin\Release\net6.0\publish\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Management\*
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Security
+  File .\bin\Release\net6.0\publish\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Security\*
+  SetOutPath $InstDir\bin\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Utility
+  File .\bin\Release\net6.0\publish\runtimes\unix\lib\net6.0\Modules\Microsoft.PowerShell.Utility\*
 
   CreateDirectory $InstDir\certs
   
