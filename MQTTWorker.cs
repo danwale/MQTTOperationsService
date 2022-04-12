@@ -267,7 +267,7 @@ namespace MQTTOperationsService
             {
                 // Build the MQTT Client Options
                 var mqttClientOptions = clientOptionsBuilder.Build();
-                MqttClientAuthenticateResult result = null;
+                MqttClientConnectResult result = null;
                 try
                 {
                     result = await _mqttClient.ConnectAsync(mqttClientOptions, ct);
